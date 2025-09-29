@@ -18,6 +18,16 @@ impl Runtime {
     fn register_block(&mut self, who: &String, amount: u128) {
         self.balances.set_balance(who, amount);
         self.system.inc_block_number();
+        self.system.inc_nonce(who);
+    }
+
+    fn transfer_from_to(
+        &mut self,
+        from: &String,
+        to: &String,
+        amount: u128,
+    ) -> Result<(), &'static str> {
+        self.balances.transfer(from.clone(), to.clone(), amount)
     }
 }
 fn main() {
@@ -28,6 +38,13 @@ fn main() {
     let john = "john".to_string();
 
     runtime.register_block(&alice, 100);
+    runtime.register_block(&bob, 100);
 
-    assert_eq!(runtime.system.block_number(), 1)
+    let _ = runtime
+        .transfer_from_to(&bob, &alice, 50)
+        .map_err(|err| println!("Error: {:?}", err));
+
+    let bob_balance = runtime.balances.get_balance(&bob);
+
+    println!("Bob has {:?}", bob_balance);
 }
