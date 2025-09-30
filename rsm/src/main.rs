@@ -1,6 +1,8 @@
 mod balances;
 mod system;
 
+#[derive(Debug)]
+
 // this is where we bundle all the modules
 pub struct Runtime {
     system: system::Pallet,
@@ -44,7 +46,5 @@ fn main() {
         .transfer_from_to(&bob, &alice, 50)
         .map_err(|err| println!("Error: {:?}", err));
 
-    let bob_balance = runtime.balances.get_balance(&bob);
-
-    println!("Bob has {:?}", bob_balance);
+    println!("Bob has {:#?}", runtime);
 }
