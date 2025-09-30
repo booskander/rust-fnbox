@@ -1,9 +1,13 @@
 use std::collections::BTreeMap;
 
+type AccountId = String;
+type BlockNumber = u32;
+type Balance = u128;
+
 #[derive(Debug)]
 
 pub struct Pallet {
-    pub balances: BTreeMap<String, u128>,
+    pub balances: BTreeMap<AccountId, Balance>,
 }
 
 impl Pallet {
@@ -13,19 +17,19 @@ impl Pallet {
         }
     }
 
-    pub fn set_balance(&mut self, who: &String, amount: u128) {
+    pub fn set_balance(&mut self, who: &AccountId, amount: Balance) {
         self.balances.insert(who.clone(), amount);
     }
 
-    pub fn get_balance(&mut self, who: &String) -> u128 {
+    pub fn get_balance(&mut self, who: &AccountId) -> Balance {
         *self.balances.get(who).unwrap_or(&0)
     }
 
     pub fn transfer(
         &mut self,
-        caller: String,
-        to: String,
-        amount: u128,
+        caller: AccountId,
+        to: AccountId,
+        amount: Balance,
     ) -> Result<(), &'static str> {
         let caller_balance = self.get_balance(&caller);
         let to_balance = self.get_balance(&to);
