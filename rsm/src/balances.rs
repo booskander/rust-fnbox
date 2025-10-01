@@ -1,16 +1,18 @@
 use std::collections::BTreeMap;
 
-type AccountId = String;
-type BlockNumber = u32;
-type Balance = u128;
+use num::traits::{CheckedAdd, CheckedSub, Zero};
 
 #[derive(Debug)]
 
-pub struct Pallet {
+pub struct Pallet<AccountId, Balance> {
     pub balances: BTreeMap<AccountId, Balance>,
 }
 
-impl Pallet {
+impl<AccountId, Balance> Pallet<AccountId, Balance>
+where
+    AccountId: Ord + Clone,
+    Balance: Zero + CheckedSub + CheckedAdd + Copy,
+{
     pub fn new() -> Self {
         Self {
             balances: BTreeMap::new(),
@@ -22,7 +24,7 @@ impl Pallet {
     }
 
     pub fn get_balance(&mut self, who: &AccountId) -> Balance {
-        *self.balances.get(who).unwrap_or(&0)
+        *self.balances.get(who).unwrap_or(&Balance::zero())
     }
 
     pub fn transfer(
@@ -35,11 +37,11 @@ impl Pallet {
         let to_balance = self.get_balance(&to);
 
         let new_caller_balance = caller_balance
-            .checked_sub(amount)
+            .checked_sub(&amount)
             .ok_or("Insufficient balance")?;
 
         let new_to_balance = to_balance
-            .checked_add(amount)
+            .checked_add(&amount)
             .ok_or("Overflow when adding to balance")?;
 
         self.set_balance(&caller, new_caller_balance);

@@ -1,12 +1,19 @@
 mod balances;
 mod system;
+// we can define the types outside
+mod types {
+    pub type AccountId = String;
+    pub type Balance = u128;
+    pub type BlockNumber = u32;
+    pub type Nonce = u32;
+}
 
 #[derive(Debug)]
 
 // this is where we bundle all the modules
 pub struct Runtime {
-    system: system::Pallet,
-    balances: balances::Pallet,
+    system: system::Pallet<types::AccountId, types::BlockNumber, types::Nonce>,
+    balances: balances::Pallet<types::AccountId, types::Balance>,
 }
 
 impl Runtime {
