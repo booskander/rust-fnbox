@@ -89,7 +89,32 @@ impl crate::support::Dispatch for Runtime {
 fn main() {
     let mut runtime = Runtime::new();
 
-    let alice = "alice".to_string();
-    let bob = "bob".to_string();
-    let john = "john".to_string();
+    let alice = String::from("alice");
+    let bob = String::from("bob");
+    let john = String::from("john");
+
+    runtime.balances.set_balance(&alice, 100);
+    let block_1 = types::Block {
+        header: support::Header { block_number: 1 },
+        extrinsics: vec![
+            support::Extrinsic {
+                caller: alice.clone(),
+                call: RuntimeCall::BalancesTransfer {
+                    to: bob.clone(),
+                    amount: 71,
+                },
+            },
+            support::Extrinsic {
+                caller: alice.clone(),
+                call: RuntimeCall::BalancesTransfer {
+                    to: john.clone(),
+                    amount: 10,
+                },
+            },
+        ],
+    };
+
+    runtime.execute_block(block_1).expect("panic");
+
+    println!("{:#?}", runtime);
 }
