@@ -3,11 +3,18 @@ mod support;
 mod system;
 // we can define the types outside
 mod types {
+    use crate::support;
+
     pub type AccountId = String;
     pub type Balance = u128;
     pub type BlockNumber = u32;
     pub type Nonce = u32;
+    pub type Extrinsic = support::Extrinsic<AccountId, crate::RuntimeCall>;
+    pub type Header = support::Header<BlockNumber>;
+    pub type Block = support::Block<Header, Extrinsic>;
 }
+
+enum RuntimeCall {}
 
 impl system::Config for Runtime {
     type AccountId = types::AccountId;
