@@ -1,63 +1,64 @@
 use std::{collections::BTreeMap, ops::AddAssign};
 
-use num::{
-    traits::{CheckedAdd, CheckedSub, One, Zero},
-    zero,
-};
+use num::traits::{CheckedAdd, CheckedSub, One, Zero};
 
-// if we need to change those values further in development
-// it can be very useful and time saving
-type AccountId = String;
-type BlockNumber = u32;
-type Nonce = u32;
-
-#[derive(Debug)]
-pub struct Pallet<AccountId, BlockNumber, Nonce> {
-    block_number: BlockNumber,
-    nonce: BTreeMap<AccountId, Nonce>,
+// acts as an interface to then implement
+pub trait Config {
+    type AccountId: Ord + Clone;
+    type BlockNumber: Zero + One + AddAssign + Copy;
+    type Nonce: Zero + One + Copy;
 }
 
-impl<AccountId, BlockNumber, Nonce> Pallet<AccountId, BlockNumber, Nonce>
-where
-    AccountId: Ord + Clone,
-    BlockNumber: Zero + One + CheckedSub + CheckedAdd + Copy + AddAssign,
-    Nonce: Ord + Clone + Copy + Zero + One,
-{
+#[derive(Debug)]
+pub struct Pallet<T: Config> {
+    block_number: T::BlockNumber,
+    nonce: BTreeMap<T::AccountId, T::Nonce>,
+}
+
+impl<T: Config> Pallet<T> {
     pub fn new() -> Self {
         Self {
-            block_number: zero(),
+            block_number: T::BlockNumber::zero(),
             nonce: BTreeMap::new(),
         }
     }
-    pub fn block_number(&self) -> BlockNumber {
+    pub fn block_number(&self) -> T::BlockNumber {
         self.block_number
     }
 
     pub fn inc_block_number(&mut self) {
-        self.block_number += BlockNumber::one()
+        self.block_number += T::BlockNumber::one()
     }
 
-    pub fn inc_nonce(&mut self, who: &AccountId) {
-        let nonce = *self.nonce.get(who).unwrap_or(&Nonce::zero());
-        self.nonce.insert(who.clone(), nonce + Nonce::one());
+    pub fn inc_nonce(&mut self, who: &T::AccountId) {
+        let nonce = *self.nonce.get(who).unwrap_or(&T::Nonce::zero());
+        self.nonce.insert(who.clone(), nonce + T::Nonce::one());
     }
 
-    pub fn get_nonce(&mut self, who: &AccountId) -> Nonce {
-        *self.nonce.get(who).unwrap_or(&Nonce::zero())
+    pub fn get_nonce(&mut self, who: &T::AccountId) -> T::Nonce {
+        *self.nonce.get(who).unwrap_or(&T::Nonce::zero())
     }
 }
 
 #[cfg(test)]
 mod test {
+
+    struct TestConfig;
+
+    impl super::Config for TestConfig {
+        type AccountId = String;
+        type BlockNumber = u32;
+        type Nonce = u32;
+    }
     #[test]
     fn init_system() {
-        let system: super::Pallet<String, u32, u32> = super::Pallet::new();
+        let system: super::Pallet<TestConfig> = super::Pallet::new();
         assert_eq!(system.block_number(), 0);
     }
 
     #[test]
     fn inc_block_number() {
-        let mut system: super::Pallet<String, u32, u32> = super::Pallet::new();
+        let mut system: super::Pallet<TestConfig> = super::Pallet::new();
         system.inc_block_number();
         assert_eq!(system.block_number(), 1);
     }
@@ -65,7 +66,7 @@ mod test {
     #[test]
     fn inc_nonce() {
         let alice: String = "Alice".to_string();
-        let mut system: super::Pallet<String, u32, u32> = super::Pallet::new();
+        let mut system: super::Pallet<TestConfig> = super::Pallet::new();
 
         system.inc_nonce(&alice);
         system.inc_nonce(&alice);

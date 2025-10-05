@@ -8,12 +8,23 @@ mod types {
     pub type Nonce = u32;
 }
 
+impl system::Config for Runtime {
+    type AccountId = types::AccountId;
+    type BlockNumber = types::BlockNumber;
+    type Nonce = types::Nonce;
+}
+
+impl balances::Config for Runtime {
+    type AccountId = types::AccountId;
+    type Balance = types::Balance;
+}
+
 #[derive(Debug)]
 
 // this is where we bundle all the modules
 pub struct Runtime {
-    system: system::Pallet<types::AccountId, types::BlockNumber, types::Nonce>,
-    balances: balances::Pallet<types::AccountId, types::Balance>,
+    system: system::Pallet<Runtime>,
+    balances: balances::Pallet<Runtime>,
 }
 
 impl Runtime {
