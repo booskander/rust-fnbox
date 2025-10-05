@@ -16,7 +16,12 @@ mod types {
     pub type Block = support::Block<Header, Extrinsic>;
 }
 
-pub enum RuntimeCall {}
+pub enum RuntimeCall {
+    BalancesTransfer {
+        to: types::AccountId,
+        amount: types::Balance,
+    },
+}
 
 impl system::Config for Runtime {
     type AccountId = types::AccountId;
@@ -69,8 +74,16 @@ impl crate::support::Dispatch for Runtime {
     type Caller = <Runtime as system::Config>::AccountId;
     type Call = RuntimeCall;
 
-    fn dispatch(&mut self, caller: Self::Caller, call: Self::Call) -> support::DispatchResult {
-        todo!()
+    fn dispatch(
+        &mut self,
+        caller: Self::Caller,
+        runtime_call: Self::Call,
+    ) -> support::DispatchResult {
+        match runtime_call {
+            RuntimeCall::BalancesTransfer { to, amount } => {
+                self.balances.transfer(caller, to, amount)
+            }
+        }
     }
 }
 fn main() {
