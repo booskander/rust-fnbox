@@ -1,3 +1,5 @@
+use crate::support::Dispatch;
+
 mod balances;
 mod support;
 mod system;
@@ -14,7 +16,7 @@ mod types {
     pub type Block = support::Block<Header, Extrinsic>;
 }
 
-enum RuntimeCall {}
+pub enum RuntimeCall {}
 
 impl system::Config for Runtime {
     type AccountId = types::AccountId;
@@ -42,19 +44,33 @@ impl Runtime {
         }
     }
 
-    fn register_block(&mut self, who: &String, amount: u128) {
-        self.balances.set_balance(who, amount);
+    fn execute_block(&mut self, block: types::Block) -> support::DispatchResult {
         self.system.inc_block_number();
-        self.system.inc_nonce(who);
-    }
 
-    fn transfer_from_to(
-        &mut self,
-        from: &String,
-        to: &String,
-        amount: u128,
-    ) -> Result<(), &'static str> {
-        self.balances.transfer(from.clone(), to.clone(), amount)
+        if self.system.block_number() != block.header.block_number {
+            return Err("Block number mismatch, can't proceed");
+        }
+
+        for (i, support::Extrinsic { caller, call }) in block.extrinsics.into_iter().enumerate() {
+            self.system.inc_nonce(&caller);
+            let _ = self.dispatch(caller, call).map_err(|e| {
+                eprintln!(
+                    "Extrinsic Error \n\tBlock Number: {}\n\tExtrinsic Number: {}\n\tError: {}",
+                    block.header.block_number, i, e
+                )
+            });
+        }
+
+        Ok(())
+    }
+}
+
+impl crate::support::Dispatch for Runtime {
+    type Caller = <Runtime as system::Config>::AccountId;
+    type Call = RuntimeCall;
+
+    fn dispatch(&mut self, caller: Self::Caller, call: Self::Call) -> support::DispatchResult {
+        todo!()
     }
 }
 fn main() {
@@ -63,13 +79,4 @@ fn main() {
     let alice = "alice".to_string();
     let bob = "bob".to_string();
     let john = "john".to_string();
-
-    runtime.register_block(&alice, 100);
-    runtime.register_block(&bob, 100);
-
-    let _ = runtime
-        .transfer_from_to(&bob, &alice, 50)
-        .map_err(|err| println!("Error: {:?}", err));
-
-    println!("Bob has {:#?}", runtime);
 }
